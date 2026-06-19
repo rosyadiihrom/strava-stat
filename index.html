@@ -267,15 +267,15 @@
             <div class="input-group">
                 <div class="input-field">
                     <label>Jarak (km)</label>
-                    <input type="number" id="calc-distance" step="0.01" value="4.04" inputmode="decimal" oninput="autoCalculateTime()">
+                    <input type="number" id="calc-distance" step="0.01" value="4.04" inputmode="decimal" oninput="recalculateFromDistanceOrPace()">
                 </div>
                 <div class="input-field">
                     <label>Pace (e.g: 8:19)</label>
-                    <input type="text" id="calc-pace-string" value="8:19" placeholder="5:19" oninput="autoCalculateTime()">
+                    <input type="text" id="calc-pace-string" value="8:19" placeholder="5:19" oninput="recalculateFromDistanceOrPace()">
                 </div>
                 <div class="input-field">
-                    <label>Waktu (Auto/Manual)</label>
-                    <input type="text" id="calc-time-display" value="33m 36s" oninput="manualUpdateTime()">
+                    <label>Waktu (e.g: 33m 36s atau 01:20:15)</label>
+                    <input type="text" id="calc-time-display" value="33m 36s" placeholder="33m 36s" oninput="recalculateFromTime()">
                 </div>
             </div>
         </div>
@@ -289,7 +289,10 @@
     <div id="toast" style="border-left-color: var(--strava-orange);">Gambar transparan berhasil disalin!</div>
 
     <script>
-        function autoCalculateTime() {
+        // --- LOGIKA KONEKSI ANTAR INPUTAN (TIMBAL BALIK) ---
+        
+        // Skenario A: User mengubah Jarak atau Pace -> Hitung otomatis Waktu
+        function recalculateFromDistanceOrPace() {
             const distInput = parseFloat(document.getElementById('calc-distance').value);
             const paceRaw = document.getElementById('calc-pace-string').value.trim();
 
@@ -320,24 +323,70 @@
             document.getElementById('calc-time-display').value = timeString;
         }
 
-        function manualUpdateTime() {
-            const manualTime = document.getElementById('calc-time-display').value;
-            document.getElementById('view-time').innerText = manualTime ? manualTime : "--";
+        // Skenario B: User mengubah Waktu secara manual -> Hitung otomatis Pace rinciannya
+        function recalculateFromTime() {
+            const timeRaw = document.getElementById('calc-time-display').value.trim();
+            const distInput = parseFloat(document.getElementById('calc-distance').value);
+
+            document.getElementById('view-time').innerText = timeRaw ? timeRaw : "--";
+            document.getElementById('view-distance').innerText = isNaN(distInput) ? "-- km" : `${distInput.toFixed(2)} km`;
+
+            if (!distInput || distInput <= 0 || !timeRaw) return;
+
+            calculatePaceFromDistAndTime(distInput, timeRaw);
         }
 
-        // FUNGSI UTAMA YANG DIPERBAIKI (Ditambahkan parameter pengabaian CORS lokal)
+        // Fungsi bantu mengonversi string waktu menjadi total detik
+        function parseTimeToSeconds(timeStr) {
+            let totalSeconds = 0;
+            timeStr = timeStr.toLowerCase();
+
+            if (timeStr.includes('m') || timeStr.includes('s') || timeStr.includes('h')) {
+                const hrsMatch = timeStr.match(/(\d+)\s*h/);
+                const minsMatch = timeStr.match(/(\d+)\s*m/);
+                const secsMatch = timeStr.match(/(\d+)\s*s/);
+
+                if (hrsMatch) totalSeconds += parseInt(hrsMatch[1]) * 3600;
+                if (minsMatch) totalSeconds += parseInt(minsMatch[1]) * 60;
+                if (secsMatch) totalSeconds += parseInt(secsMatch[1]);
+            } else {
+                const parts = timeStr.split(':').map(Number);
+                if (parts.length === 3) {
+                    totalSeconds += parts[0] * 3600 + parts[1] * 60 + parts[2];
+                } else if (parts.length === 2) {
+                    totalSeconds += parts[0] * 60 + parts[1];
+                }
+            }
+            return totalSeconds;
+        }
+
+        // Fungsi utama hitung Pace berdasarkan Jarak & Waktu
+        function calculatePaceFromDistAndTime(distance, timeStr) {
+            const totalSeconds = parseTimeToSeconds(timeStr);
+            if (totalSeconds <= 0 || !distance) return;
+
+            const paceTotalSeconds = Math.floor(totalSeconds / distance);
+            const paceMinutes = Math.floor(paceTotalSeconds / 60);
+            const paceSeconds = paceTotalSeconds % 60;
+
+            const formattedPace = `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('calc-pace-string').value = formattedPace;
+            document.getElementById('view-pace').innerText = `${formattedPace} /km`;
+        }
+
+        // --- FITUR GENERATOR GAMBAR ---
         function generateCanvas(callback) {
             const card = document.getElementById('strava-card');
             const originalBg = card.style.backgroundColor;
             card.style.backgroundColor = 'transparent'; 
 
-            // Pengaturan html2canvas disesuaikan agar toleran terhadap file gambar lokal luar
             html2canvas(card, { 
                 backgroundColor: null,
                 logging: false,
                 useCORS: true,
-                allowTaint: true, // Izinkan rendering jika gambar terdeteksi lintas berkas lokal
-                scale: 2 // Menurunkan ke skala 2 agar performa HP jauh lebih enteng, namun tetap tajam
+                allowTaint: true,
+                scale: 2 
             }).then(canvas => {
                 card.style.backgroundColor = originalBg; 
                 callback(canvas);
@@ -361,11 +410,11 @@
                             showToast("Gambar transparan berhasil disalin!");
                         }).catch(err => {
                             console.error(err);
-                            alert("Gagal menyalin otomatis ke clipboard HP. Silakan gunakan tombol 'Unduh File PNG Transparan'.");
+                            alert("Gagal menyalin otomatis. Gunakan tombol 'Unduh File PNG Transparan'.");
                         });
                     }, 'image/png');
                 } catch(e) {
-                    alert("Akses salin diblokir browser. Silakan gunakan tombol 'Unduh File PNG Transparan'.");
+                    alert("Akses salin diblokir browser. Gunakan tombol 'Unduh File PNG Transparan'.");
                 }
             });
         }
@@ -384,7 +433,7 @@
                     document.body.removeChild(createLink);
                     showToast("Gambar berhasil diunduh!");
                 } catch(e) {
-                    alert("Gagal mengunduh gambar secara langsung karena batasan keamanan file lokal browser. Solusi: Gunakan ekstensi Live Server atau online-kan file HTML ini.");
+                    alert("Gagal mengunduh berkas.");
                 }
             });
         }
