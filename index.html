@@ -66,6 +66,10 @@
             justify-content: center;
             box-sizing: border-box;
             border-radius: 6px;
+            
+            /* Menceperkan seluruh isi kartu (Teks, Logo Strava, & Sepatu) secara bersamaan */
+            transform: scaleY(0.85);
+            transform-origin: center;
         }
 
         .stats-grid {
@@ -88,20 +92,14 @@
             font-size: 4vw; 
             font-weight: 400;
             opacity: 0.9;
-            display: inline-block;
-            transform: scaleY(0.85);
-            transform-origin: bottom;
         }
 
         .stat-value {
             color: #ffffff;
             font-size: 5.5vw; 
-            font-weight: 550;
+            font-weight: 550; 
             letter-spacing: -0.5px;
             white-space: nowrap;
-            display: inline-block;
-            transform: scaleY(0.85);
-            transform-origin: bottom;
         }
 
         @media (min-width: 480px) {
@@ -129,14 +127,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 35px; /* Mengatur ukuran logo sepatu agar pas */
-            margin-top: 20px; /* Jarak dari teks statistik ke logo sepatu */
+            width: 35px; 
+            margin-top: 20px; 
         }
 
         .sepatu-container img {
             width: 100%;
             height: auto;
-            filter: brightness(0) invert(1); /* Membuat logo sepatu otomatis putih jika aslinya hitam/berwarna */
+            filter: brightness(0) invert(1); 
         }
 
         /* --- INPUT PANEL --- */
