@@ -6,7 +6,7 @@
     <title>Strava Stat Generator & Auto Calculator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -67,7 +67,6 @@
             box-sizing: border-box;
             border-radius: 6px;
             
-            /* Menceperkan seluruh isi kartu (Teks, Logo Strava, & Sepatu) secara bersamaan */
             transform: scaleY(0.85);
             transform-origin: center;
         }
@@ -97,7 +96,7 @@
         .stat-value {
             color: #ffffff;
             font-size: 5.5vw; 
-            font-weight: 550; 
+            font-weight: 600; /* Diubah menjadi 600 agar ketebalan tulisan angka pas (Semi-Bold) */
             letter-spacing: -0.5px;
             white-space: nowrap;
         }
@@ -113,7 +112,7 @@
             justify-content: center;
             align-items: center;
             width: 95px;
-            margin-bottom: 25px; 
+            margin-bottom: 12px; 
         }
 
         .logo-container img {
